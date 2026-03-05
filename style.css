@@ -221,7 +221,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 40px 48px;
-  max-width: 900px;
+  min-width: 0;
 }
 #contentArea::-webkit-scrollbar { width: 6px; }
 #contentArea::-webkit-scrollbar-track { background: transparent; }
