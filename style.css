@@ -722,7 +722,8 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  padding: 0 0 16px;
+  margin-top: -40px;
+  padding: 10px 0 12px;
   background: var(--bg);
 }
 
