@@ -4,6 +4,9 @@ let currentSkill = null
 let searchTimeout = null
 let availableFlags = []
 let currentSkillsDir = ''
+let currentFilePath = null   // null = SKILL.md
+let currentRawContent = ''
+let editorMode = false
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -15,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initKeyboard()
   initTreeEvents()
   initFolderSelector()
+  initContextMenu()
+  initEditorToggle()
 
   // Restore last skill/file from URL hash
   const hash = location.hash.slice(1)
@@ -84,6 +89,13 @@ async function loadSkill(name, section = null) {
     const res = await fetch(`/api/skills/${encodeURIComponent(name)}`)
     if (!res.ok) throw new Error('Not found')
     const data = await res.json()
+
+    if (editorMode) {
+      document.getElementById('editorToggle').checked = false
+      toggleEditorMode(false)
+    }
+    currentFilePath = null
+    currentRawContent = data.rawContent || ''
 
     showPanel('skillContent')
     document.getElementById('skillContent').innerHTML = data.html
@@ -216,6 +228,13 @@ async function loadFile(skillName, filePath) {
     const res = await fetch(`/api/skills/${encodeURIComponent(skillName)}/file?path=${encodeURIComponent(filePath)}`)
     if (!res.ok) throw new Error('Not found')
     const data = await res.json()
+
+    if (editorMode) {
+      document.getElementById('editorToggle').checked = false
+      toggleEditorMode(false)
+    }
+    currentFilePath = filePath
+    currentRawContent = data.rawContent || data.content || ''
 
     showPanel('skillContent')
 
@@ -456,7 +475,8 @@ function copyCode(btn) {
   navigator.clipboard.writeText(code.innerText).then(() => showToast())
 }
 
-function showToast() {
+function showToast(msg) {
+  document.getElementById('toastMsg').textContent = msg || 'Copiado'
   const toast = document.getElementById('toast')
   toast.classList.add('show')
   setTimeout(() => toast.classList.remove('show'), 1800)
@@ -589,12 +609,126 @@ async function pickFolder() {
   }
 }
 
+// ─── Editor mode ──────────────────────────────────────────────────────────────
+
+function initEditorToggle() {
+  document.getElementById('editorToggle').addEventListener('change', e => {
+    toggleEditorMode(e.target.checked)
+  })
+  document.getElementById('btnSave').addEventListener('click', saveFile)
+}
+
+function toggleEditorMode(active) {
+  editorMode = active
+  const skillContent = document.getElementById('skillContent')
+  const editorArea = document.getElementById('editorArea')
+  const btnSave = document.getElementById('btnSave')
+
+  if (active) {
+    document.getElementById('editorTextarea').value = currentRawContent
+    skillContent.classList.add('hidden')
+    editorArea.classList.remove('hidden')
+    btnSave.classList.remove('hidden')
+    document.getElementById('editorTextarea').focus()
+  } else {
+    editorArea.classList.add('hidden')
+    skillContent.classList.remove('hidden')
+    btnSave.classList.add('hidden')
+  }
+}
+
+async function saveFile() {
+  if (!currentSkill) return
+  const content = document.getElementById('editorTextarea').value
+  const filePath = currentFilePath || 'SKILL.md'
+  const btn = document.getElementById('btnSave')
+  btn.disabled = true
+
+  try {
+    const res = await fetch(
+      `/api/skills/${encodeURIComponent(currentSkill)}/file?path=${encodeURIComponent(filePath)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      }
+    )
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || 'Error guardando')
+    }
+
+    currentRawContent = content
+    document.getElementById('editorToggle').checked = false
+    toggleEditorMode(false)
+
+    if (currentFilePath) {
+      await loadFile(currentSkill, currentFilePath)
+    } else {
+      await loadSkill(currentSkill)
+    }
+
+    showToast('Guardado')
+  } catch (e) {
+    alert('Error al guardar: ' + e.message)
+  } finally {
+    btn.disabled = false
+  }
+}
+
+// ─── Context menu ─────────────────────────────────────────────────────────────
+
+let ctxTarget = null
+
+function initContextMenu() {
+  const menu = document.getElementById('contextMenu')
+
+  // Right-click on tree files (delegated from skillList)
+  document.getElementById('skillList').addEventListener('contextmenu', e => {
+    const fileEl = e.target.closest('.tree-file')
+    if (!fileEl) return
+    e.preventDefault()
+    ctxTarget = { skill: fileEl.dataset.skill, path: fileEl.dataset.path }
+    showContextMenu(e.clientX, e.clientY)
+  })
+
+  document.getElementById('ctxOpenFolder').addEventListener('click', async () => {
+    if (!ctxTarget) return
+    hideContextMenu()
+    await fetch('/api/open-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skill: ctxTarget.skill, filePath: ctxTarget.path })
+    })
+  })
+
+  document.addEventListener('click', () => hideContextMenu())
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideContextMenu() })
+}
+
+function showContextMenu(x, y) {
+  const menu = document.getElementById('contextMenu')
+  menu.style.left = x + 'px'
+  menu.style.top = y + 'px'
+  menu.classList.remove('hidden')
+  const rect = menu.getBoundingClientRect()
+  if (rect.right > window.innerWidth)  menu.style.left = (x - rect.width) + 'px'
+  if (rect.bottom > window.innerHeight) menu.style.top = (y - rect.height) + 'px'
+}
+
+function hideContextMenu() {
+  document.getElementById('contextMenu').classList.add('hidden')
+  ctxTarget = null
+}
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 function showPanel(id) {
   ;['welcome', 'skillContent', 'searchResults'].forEach(p => {
     document.getElementById(p).classList.toggle('hidden', p !== id)
   })
+  document.getElementById('editorArea').classList.add('hidden')
+  document.getElementById('editorToolbar').classList.toggle('hidden', id !== 'skillContent')
 }
 
 function escHtml(str) {

@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const chokidar = require('chokidar')
 const { marked } = require('marked')
-const { spawnSync } = require('child_process')
+const { spawnSync, exec } = require('child_process')
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -132,9 +132,10 @@ function renderSkill(skillName) {
     return `${hashes} <a id="${id}"></a>${title}`
   })
 
+  const rawContent = fs.readFileSync(skillMd, 'utf-8')
   const html = marked.parse(content)
-  const sections = extractSections(fs.readFileSync(skillMd, 'utf-8'))
-  return { html, sections }
+  const sections = extractSections(rawContent)
+  return { html, sections, rawContent }
 }
 
 function searchSkills(query, activeFlags = []) {
@@ -330,7 +331,7 @@ app.get('/api/skills/:name/file', (req, res) => {
         const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
         return `${hashes} <a id="${id}"></a>${title}`
       })
-      res.json({ html: marked.parse(mdContent), sections: extractSections(content), ext })
+      res.json({ html: marked.parse(mdContent), sections: extractSections(content), ext, rawContent: content })
     } else {
       res.json({ content, ext })
     }
@@ -432,6 +433,37 @@ app.post('/api/set-dir', express.json(), (req, res) => {
   watcher = startWatcher(SKILLS_DIR)
 
   res.json({ success: true, skillsDir: SKILLS_DIR })
+})
+
+// Save file content
+app.put('/api/skills/:name/file', express.json(), (req, res) => {
+  if (!SKILLS_DIR) return res.status(503).json({ error: 'No hay carpeta configurada' })
+  try {
+    const skillDir = safeJoin(SKILLS_DIR, req.params.name)
+    const relPath = req.query.path || 'SKILL.md'
+    const filePath = safeJoin(skillDir, relPath)
+    if (typeof req.body.content !== 'string') return res.status(400).json({ error: 'Contenido inválido' })
+    fs.writeFileSync(filePath, req.body.content, 'utf-8')
+    res.json({ success: true })
+  } catch (e) {
+    res.status(400).json({ error: e.message })
+  }
+})
+
+// Open file location in Explorer
+app.post('/api/open-folder', express.json(), (req, res) => {
+  if (!SKILLS_DIR) return res.status(503).json({ error: 'No hay carpeta configurada' })
+  try {
+    const { skill, filePath } = req.body
+    if (!skill || typeof skill !== 'string') return res.status(400).json({ error: 'Parámetros inválidos' })
+    const skillDir = safeJoin(SKILLS_DIR, skill)
+    const fullPath = filePath ? safeJoin(skillDir, filePath) : skillDir
+    const winPath = fullPath.replace(/\//g, '\\')
+    exec(`explorer /select,"${winPath}"`)
+    res.json({ success: true })
+  } catch (e) {
+    res.status(400).json({ error: e.message })
+  }
 })
 
 if (require.main === module) {
