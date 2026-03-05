@@ -25,6 +25,7 @@
   "build": {
     "appId": "com.flow-docs.app",
     "productName": "Flow-Docs",
+    "icon": "assets/icon.ico",
     "asar": false,
     "directories": {
       "output": "dist"
@@ -35,9 +36,11 @@
       "app.js",
       "index.html",
       "style.css",
-      "package.json"
+      "package.json",
+      "assets/**"
     ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }

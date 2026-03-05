@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, shell } = require('electron')
 const http = require('http')
+const path = require('path')
 
 // Set user data path before requiring server (used for skilldocs.config.json location)
 process.env.USER_DATA_PATH = app.getPath('userData')
@@ -34,6 +35,7 @@ function createWindow () {
     minWidth: 800,
     minHeight: 600,
     title: 'Flow-Docs',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,

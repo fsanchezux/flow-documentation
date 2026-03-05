@@ -706,12 +706,21 @@ function initContextMenu() {
 
   document.getElementById('ctxOpenFolder').addEventListener('click', async () => {
     if (!ctxTarget) return
+    const target = ctxTarget  // save before hideContextMenu nullifies ctxTarget
     hideContextMenu()
-    await fetch('/api/open-folder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill: ctxTarget.skill, filePath: ctxTarget.path })
-    })
+    try {
+      const res = await fetch('/api/open-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skill: target.skill, filePath: target.path })
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        showToast('Error: ' + (err.error || res.status))
+      }
+    } catch (e) {
+      showToast('Error al abrir explorador')
+    }
   })
 
   document.addEventListener('click', () => hideContextMenu())
