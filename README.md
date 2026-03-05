@@ -1,29 +1,49 @@
 # Flow-Docs
 
-Visor local de documentación para archivos `SKILL.md`. Convierte tus skills en documentación navegable con búsqueda, syntax highlight y hot-reload.
+Visor local de documentación para archivos `SKILL.md`. Convierte tus skills en documentación navegable con búsqueda, syntax highlight, editor integrado y hot-reload.
 
-## Inicio rápido
+---
 
-```bash
-npm install
-npm start
-# → http://localhost:3000
-```
+## Descargar e instalar (app de escritorio)
 
-Para desarrollo con auto-restart del servidor:
-```bash
-npm run dev
-```
+### 1. Ve a la página de releases
 
-Al abrir la app por primera vez, selecciona la carpeta de tu ordenador que contiene tu documentación. La ruta queda guardada en `skilldocs.config.json` y se restaura automáticamente en cada sesión.
+👉 **[github.com/fsanchezux/flow-documentation/releases](https://github.com/fsanchezux/flow-documentation/releases)**
 
-## Selección de carpeta
+### 2. Descarga el instalador
 
-Flow-Docs no tiene una carpeta fija — al iniciar sin configuración previa, la pantalla de bienvenida muestra un botón **"Seleccionar carpeta"** que abre el explorador nativo de Windows.
+En la última release encontrarás dos opciones:
 
-También puedes cambiar la carpeta en cualquier momento desde el botón **"Cambiar"** en la parte superior del sidebar.
+| Archivo | Descripción |
+|---|---|
+| `Flow-Docs Setup x.x.x.exe` | Instalador — instala la app en tu sistema (recomendado) |
+| `Flow-Docs x.x.x.exe` | Portable — ejecuta sin instalar, llévalo en un USB |
 
-> `skilldocs.config.json` está en `.gitignore` porque contiene rutas locales de tu máquina.
+### 3. Instala y abre
+
+- Ejecuta el `.exe` descargado
+- Si Windows muestra un aviso de SmartScreen, haz clic en **"Más información" → "Ejecutar de todas formas"**
+- Al abrir la app, selecciona la carpeta con tu documentación
+
+> La carpeta seleccionada queda guardada automáticamente y se restaura en cada sesión.
+
+---
+
+## Features
+
+- 📁 Selector de carpeta nativo — sin configuración manual
+- 💾 Carpeta persistente entre sesiones
+- 📖 Render markdown con syntax highlight (VB.NET, SQL, HTML, JS...)
+- 🔍 Búsqueda en todos los skills (`Ctrl+K`) con filtros por tipo (`--doc`, `--sql`, `--vb`...)
+- ✏️ Editor integrado — edita y guarda cualquier archivo sin salir de la app
+- 🖱️ Clic derecho en cualquier archivo → abrir en el Explorador de Windows
+- 📋 Copiar bloques de código con un clic
+- ⚡ Hot-reload: banner de aviso al editar archivos externamente
+- 🗂️ TOC (tabla de contenidos) automático
+- 🔗 URLs con hash para compartir secciones (`#skill-name/section-id`)
+- 🌲 Árbol de archivos por skill en el sidebar
+
+---
 
 ## Estructura de skills
 
@@ -43,22 +63,24 @@ tu-carpeta/
 
 Los links relativos en el markdown (`[ver ejemplo](examples/foo.vb)`) se renderizan automáticamente como bloques de código embebidos.
 
-## Features
+---
 
-- 📁 Selector de carpeta nativo de Windows — sin configuración manual
-- 💾 Carpeta persistente entre sesiones (`skilldocs.config.json`)
-- 📖 Render markdown con syntax highlight (VB.NET, SQL, HTML, JS...)
-- 🔍 Búsqueda en todos los skills (`Ctrl+K`) con filtros por tipo (`--doc`, `--sql`, `--vb`...)
-- 📋 Botón de copiar en cada bloque de código
-- ⚡ Hot-reload: banner de aviso al editar cualquier archivo
-- 🗂️ TOC (tabla de contenidos) automático por skill
-- 🔗 URLs con hash para compartir secciones (`#skill-name/section-id`)
-- 🌲 Árbol de archivos por skill en el sidebar
+## Ejecutar en modo servidor (desarrollo)
 
-## Configuración de puerto
-
-Por defecto el servidor arranca en el puerto `3000`. Para cambiarlo:
+Si prefieres usarlo como servidor web local en lugar de la app de escritorio:
 
 ```bash
-PORT=4000 npm start
+npm install
+npm start
+# → http://localhost:3000
+```
+
+Para desarrollo con auto-restart:
+```bash
+npm run dev
+```
+
+Para lanzar la app Electron directamente desde el código fuente:
+```bash
+npm run electron
 ```
