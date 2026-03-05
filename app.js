@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFolderSelector()
   initContextMenu()
   initEditorToggle()
+  initTocResizer()
 
   // Restore last skill/file from URL hash
   const hash = location.hash.slice(1)
@@ -630,17 +631,20 @@ function toggleEditorMode(active) {
   const skillContent = document.getElementById('skillContent')
   const editorArea = document.getElementById('editorArea')
   const btnSave = document.getElementById('btnSave')
+  const contentArea = document.getElementById('contentArea')
 
   if (active) {
     document.getElementById('editorTextarea').value = currentRawContent
     skillContent.classList.add('hidden')
     editorArea.classList.remove('hidden')
     btnSave.classList.remove('hidden')
+    contentArea.classList.add('editor-mode-active')
     document.getElementById('editorTextarea').focus()
   } else {
     editorArea.classList.add('hidden')
     skillContent.classList.remove('hidden')
     btnSave.classList.add('hidden')
+    contentArea.classList.remove('editor-mode-active')
   }
 }
 
@@ -727,6 +731,46 @@ function showContextMenu(x, y) {
 function hideContextMenu() {
   document.getElementById('contextMenu').classList.add('hidden')
   ctxTarget = null
+}
+
+// ─── TOC resizer ──────────────────────────────────────────────────────────────
+
+function initTocResizer() {
+  const resizer = document.getElementById('tocResizer')
+  const toc = document.getElementById('toc')
+
+  // Restore saved width
+  const savedW = parseInt(localStorage.getItem('flow-docs-toc-width'))
+  if (savedW && savedW >= 100 && savedW <= 600) {
+    document.documentElement.style.setProperty('--toc-w', savedW + 'px')
+  }
+
+  resizer.addEventListener('mousedown', e => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = toc.offsetWidth
+    let currentW = startW
+    resizer.classList.add('dragging')
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    function onMove(e) {
+      currentW = Math.max(100, Math.min(600, startW + (startX - e.clientX)))
+      document.documentElement.style.setProperty('--toc-w', currentW + 'px')
+    }
+
+    function onUp() {
+      resizer.classList.remove('dragging')
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      localStorage.setItem('flow-docs-toc-width', currentW)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  })
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────

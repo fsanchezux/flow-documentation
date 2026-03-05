@@ -363,11 +363,26 @@ body {
 #toc {
   width: var(--toc-w);
   flex-shrink: 0;
-  padding: 40px 16px 40px 0;
+  padding: 40px 16px 40px 10px;
   overflow-y: auto;
   display: none;
+  position: relative;
 }
 #toc.visible { display: block; }
+
+.toc-resizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background .15s;
+  z-index: 5;
+}
+.toc-resizer:hover { background: var(--border); }
+.toc-resizer.dragging { background: var(--accent); }
 
 .toc-title {
   font-size: 11px;
@@ -766,8 +781,24 @@ body {
 
 /* ── Editor area ───────────────────────────────────────────────────────────── */
 .editor-area {
-  height: calc(100vh - 180px);
   min-height: 400px;
+}
+
+/* When editor is active: contentArea becomes a flex column so textarea fills all space */
+#contentArea.editor-mode-active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 16px;
+}
+#contentArea.editor-mode-active .editor-toolbar {
+  position: relative;
+  flex-shrink: 0;
+}
+#contentArea.editor-mode-active .editor-area {
+  flex: 1;
+  min-height: 0;
+  height: auto;
 }
 .editor-textarea {
   width: 100%;
