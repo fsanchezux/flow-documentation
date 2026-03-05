@@ -654,8 +654,9 @@ async function saveFile() {
       }
     )
     if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || 'Error guardando')
+      let errMsg = `Error del servidor (${res.status})`
+      try { const err = await res.json(); errMsg = err.error || errMsg } catch (_) {}
+      throw new Error(errMsg)
     }
 
     currentRawContent = content

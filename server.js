@@ -436,7 +436,7 @@ app.post('/api/set-dir', express.json(), (req, res) => {
 })
 
 // Save file content
-app.put('/api/skills/:name/file', express.json(), (req, res) => {
+app.put('/api/skills/:name/file', express.json({ limit: '10mb' }), (req, res) => {
   if (!SKILLS_DIR) return res.status(503).json({ error: 'No hay carpeta configurada' })
   try {
     const skillDir = safeJoin(SKILLS_DIR, req.params.name)
@@ -464,6 +464,11 @@ app.post('/api/open-folder', express.json(), (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message })
   }
+})
+
+// Global error handler — always return JSON, never HTML
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error' })
 })
 
 if (require.main === module) {
