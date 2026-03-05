@@ -5,13 +5,18 @@ const path = require('path')
 // Set user data path before requiring server (used for skilldocs.config.json location)
 process.env.USER_DATA_PATH = app.getPath('userData')
 
-const { app: expressApp, setFolderPicker, setFileOpener, PORT } = require('./server')
+const { app: expressApp, setFolderPicker, setFileOpener, setUrlOpener, PORT } = require('./server')
 
 let mainWindow
 
 // Use Electron's native shell to show file in Explorer
 setFileOpener((filePath) => {
   shell.showItemInFolder(filePath)
+})
+
+// Use Electron's native shell to open URLs in the system browser
+setUrlOpener((url) => {
+  shell.openExternal(url)
 })
 
 // Use Electron's native dialog for folder selection

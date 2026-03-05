@@ -515,6 +515,22 @@ function initKeyboard() {
       }
     }
   })
+
+  // Ctrl+Click (or Cmd+Click) on any link → open in system browser
+  document.addEventListener('click', (e) => {
+    if (!e.ctrlKey && !e.metaKey) return
+    const link = e.target.closest('a[href]')
+    if (!link) return
+    const href = link.getAttribute('href')
+    if (!href || href.startsWith('#')) return  // ignore anchor-only links
+    e.preventDefault()
+    e.stopPropagation()
+    fetch('/api/open-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: href })
+    }).catch(() => {})
+  })
 }
 
 // ─── Folder selector ─────────────────────────────────────────────────────────

@@ -280,6 +280,7 @@ let watcher = SKILLS_DIR ? startWatcher(SKILLS_DIR) : null
 
 let folderPickerFn = null
 let fileOpenerFn = null
+let urlOpenerFn = null
 
 function setFolderPicker(fn) {
   folderPickerFn = fn
@@ -287,6 +288,10 @@ function setFolderPicker(fn) {
 
 function setFileOpener(fn) {
   fileOpenerFn = fn
+}
+
+function setUrlOpener(fn) {
+  urlOpenerFn = fn
 }
 
 // ─── App ─────────────────────────────────────────────────────────────────────
@@ -475,6 +480,23 @@ app.post('/api/open-folder', express.json(), (req, res) => {
   }
 })
 
+// Open external URL in system browser
+app.post('/api/open-url', express.json(), (req, res) => {
+  const { url } = req.body || {}
+  if (!url || typeof url !== 'string') return res.status(400).json({ error: 'URL inválida' })
+  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Solo URLs http/https' })
+  try {
+    if (urlOpenerFn) {
+      urlOpenerFn(url)
+    } else {
+      exec(`start "" "${url.replace(/"/g, '')}"`)
+    }
+    res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // Global error handler — always return JSON, never HTML
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' })
@@ -484,4 +506,4 @@ if (require.main === module) {
   app.listen(PORT)
 }
 
-module.exports = { app, setFolderPicker, setFileOpener, PORT }
+module.exports = { app, setFolderPicker, setFileOpener, setUrlOpener, PORT }
