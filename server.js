@@ -279,9 +279,14 @@ let watcher = SKILLS_DIR ? startWatcher(SKILLS_DIR) : null
 // ─── Folder picker (overridable by Electron) ──────────────────────────────────
 
 let folderPickerFn = null
+let fileOpenerFn = null
 
 function setFolderPicker(fn) {
   folderPickerFn = fn
+}
+
+function setFileOpener(fn) {
+  fileOpenerFn = fn
 }
 
 // ─── App ─────────────────────────────────────────────────────────────────────
@@ -458,8 +463,12 @@ app.post('/api/open-folder', express.json(), (req, res) => {
     if (!skill || typeof skill !== 'string') return res.status(400).json({ error: 'Parámetros inválidos' })
     const skillDir = safeJoin(SKILLS_DIR, skill)
     const fullPath = filePath ? safeJoin(skillDir, filePath) : skillDir
-    const winPath = fullPath.replace(/\//g, '\\')
-    exec(`explorer /select,"${winPath}"`)
+    if (fileOpenerFn) {
+      fileOpenerFn(fullPath)
+    } else {
+      const winPath = fullPath.replace(/\//g, '\\')
+      exec(`explorer /select,"${winPath}"`)
+    }
     res.json({ success: true })
   } catch (e) {
     res.status(400).json({ error: e.message })
@@ -475,4 +484,4 @@ if (require.main === module) {
   app.listen(PORT)
 }
 
-module.exports = { app, setFolderPicker, PORT }
+module.exports = { app, setFolderPicker, setFileOpener, PORT }
