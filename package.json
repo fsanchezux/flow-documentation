@@ -1,11 +1,14 @@
 {
-  "name": "skilldocs",
+  "name": "flow-docs",
   "version": "1.0.0",
   "description": "Local documentation viewer for SKILL.md files",
-  "main": "server.js",
+  "author": "fsanchezux",
+  "main": "main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "electron": "electron .",
+    "build:electron": "electron-builder --win"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
@@ -14,6 +17,42 @@
     "marked-highlight": "^2.1.1"
   },
   "devDependencies": {
+    "@electron/packager": "^19.0.5",
+    "electron": "^40.7.0",
+    "electron-builder": "^26.8.1",
     "nodemon": "^3.0.2"
+  },
+  "build": {
+    "appId": "com.flow-docs.app",
+    "productName": "Flow-Docs",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "app.js",
+      "index.html",
+      "style.css",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/nodemon/**",
+      "!node_modules/.cache/**",
+      "!node_modules/electron-builder/**",
+      "!node_modules/@electron/packager/**"
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

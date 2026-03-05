@@ -1,2 +1,4 @@
 node_modules/
 skilldocs.config.json
+dist/
+skills/

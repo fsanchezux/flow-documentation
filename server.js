@@ -8,7 +8,7 @@ const { spawnSync } = require('child_process')
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000
-const CONFIG_FILE = path.join(__dirname, 'skilldocs.config.json')
+const CONFIG_FILE = path.join(process.env.USER_DATA_PATH || __dirname, 'skilldocs.config.json')
 
 function loadConfig() {
   try {
@@ -275,6 +275,14 @@ function startWatcher(dir) {
 
 let watcher = SKILLS_DIR ? startWatcher(SKILLS_DIR) : null
 
+// ─── Folder picker (overridable by Electron) ──────────────────────────────────
+
+let folderPickerFn = null
+
+function setFolderPicker(fn) {
+  folderPickerFn = fn
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 const app = express()
@@ -381,9 +389,16 @@ app.get('/api/config', (req, res) => {
   res.json({ skillsDir: SKILLS_DIR })
 })
 
-// Open native Windows folder picker dialog
-app.post('/api/pick-folder', (req, res) => {
-  const psScript = `
+// Open native folder picker dialog
+app.post('/api/pick-folder', async (req, res) => {
+  let selectedPath
+
+  if (folderPickerFn) {
+    // Electron mode: use native Electron dialog
+    selectedPath = await folderPickerFn()
+  } else {
+    // Standalone Node mode: use PowerShell (Windows only)
+    const psScript = `
 Add-Type -AssemblyName System.Windows.Forms
 $f = New-Object System.Windows.Forms.FolderBrowserDialog
 $f.Description = 'Seleccionar carpeta de documentacion'
@@ -391,11 +406,13 @@ $f.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 $f.ShowNewFolderButton = $false
 if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }
 `
-  const result = spawnSync('powershell', ['-NoProfile', '-Command', psScript], {
-    timeout: 120000,
-    encoding: 'utf-8'
-  })
-  const selectedPath = (result.stdout || '').trim()
+    const result = spawnSync('powershell', ['-NoProfile', '-Command', psScript], {
+      timeout: 120000,
+      encoding: 'utf-8'
+    })
+    selectedPath = (result.stdout || '').trim()
+  }
+
   if (!selectedPath) return res.json({ cancelled: true })
   res.json({ path: selectedPath })
 })
@@ -414,11 +431,11 @@ app.post('/api/set-dir', express.json(), (req, res) => {
   if (watcher) watcher.close()
   watcher = startWatcher(SKILLS_DIR)
 
-  console.log(`📁 Skills dir cambiado a: ${SKILLS_DIR}`)
   res.json({ success: true, skillsDir: SKILLS_DIR })
 })
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 SkillDocs running at http://localhost:${PORT}`)
-  console.log(`📁 Skills dir: ${SKILLS_DIR}\n`)
-})
+if (require.main === module) {
+  app.listen(PORT)
+}
+
+module.exports = { app, setFolderPicker, PORT }
