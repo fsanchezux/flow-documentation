@@ -789,6 +789,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding-top: 10px;
   padding-bottom: 16px;
 }
 #contentArea.editor-mode-active .editor-toolbar {
