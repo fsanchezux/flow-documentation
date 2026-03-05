@@ -616,6 +616,13 @@ function initEditorToggle() {
     toggleEditorMode(e.target.checked)
   })
   document.getElementById('btnSave').addEventListener('click', saveFile)
+
+  document.getElementById('editorTextarea').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'Enter')) {
+      e.preventDefault()
+      saveFile()
+    }
+  })
 }
 
 function toggleEditorMode(active) {
